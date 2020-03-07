@@ -1,0 +1,236 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+<style>
+  body {
+    padding: 100px;
+    width: 1000px;
+    margin: auto;
+    text-align: left;
+    font-weight: 300;
+    font-family: 'Roboto', sans-serif;
+    color: #121212;
+    background-color:#eaf7f6;
+  }
+  h1, h2, h3, h4 {
+    font-family: 'Open Sans', sans-serif;
+  }
+</style>
+<title>CS 184 Rasterizer</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link href="https://fonts.googleapis.com/css?family=Open+Sans|Roboto" rel="stylesheet"/>
+</head>
+
+
+<body>
+
+<h1 align="middle">CS 184: Computer Graphics and Imaging, Spring 2020</h1>
+<h1 align="middle">Project 1: Rasterizer</h1>
+<h2 align="middle">Lawrence Yan</h2>
+
+<br/><br/>
+
+<div style="background-color:#FFA07A; padding: 30px">
+
+<h3 align="middle">Task 1: Drawing Single-Color Triangles</h3>
+
+<p><strong><u>Implementation:</u></strong> Rasterizing a triangle is simply a matter of coloring the pixel locations that are within the triangle itself. We can do this determination of whether a point lies within a triangle by taking the dot product of the edge normals and the respective point vector 
+  from the vertice of the triangle to given point p, checking that every value is non-negative (this assumes of course that we are working with a fixed counterclockwise orientation). To handle the case where our triangle is in a 
+clockwise orientation, I created a helper function is_ccw() which I call at the beginning to determine my given triangle's orientation. In the case that the triangle is clockwise, I flip
+the signs of my resultant dot products. By bounding the pixels we look at to be limited to the [xMin, XMax] x-coordinate locations and [yMin, yMax] y-coordinate locations, where our Min/Max variables
+represent the minimum and maximum coordinates values of our triangle, our algorithm is guaranteed to be no worse than one that checks each sample within the bounding box of the triangle.</p>
+
+<p><strong><u>Extra Credit:</u></strong> We optimize by only sampling within a bounding box around our triangle based on its minimum / maximum x,y values. 
+  Notice that in calculating our dot products, our overall equation is linear and is affected only by a change in pixel x-coordinate, pixel y-coordinate, and subpixel placement.
+  Thus, we can avoid a huge amount of redundant calculation by just incrementing our dot product values, since we know our loops increment by 1 each time, so all we have to do is shift
+  by the specified weight, t01_norm_x for dx changes and t01_norm_y for dy changes. With optimizations implemented, I get approximately 10 times improvement in performance, with a run time 
+  of 3-4 milliseconds on average compared to the roughly ~30 +/- 5 milliseconds it takes when unoptimized.  
+  </p>
+
+<div align="middle">
+  <table style="width=100%">
+    <tr>
+      <td>
+        <img src="images/timing.png" align="middle" width="400px"/>
+        <figcaption align="middle">Testing our optimization with clock(), I placed my timing around the svg.draw() command within DrawRend::redraw()</figcaption>
+      </td>
+    </tr>
+    <br/>
+    <tr>
+      <td>
+        <img src="images/basic.png" align="middle" width="400px"/>
+        <figcaption align="middle">Basic triangle. Jaggies!</figcaption>
+      </td>
+    </tr>
+  </table>
+</div>
+
+
+<h3 align="middle">Task 2: Antialiasing by Supersampling</h3>
+
+<p><strong><u>Implementation:</u></strong> I implemented supersampling by looking at a set of subpixels within each pixel equal to the sample_rate given to me within a sqrt(sample_rate) x 
+  sqrt(sample_rate) subpixel grid. For every subpixel I then sampled, adding each color to a supersample_buffer I used to store the individual colors. When complete, I resolve to my frame buffer
+  which is what is exactly shown on the screen, averaging the subpixel colors for each pixel. <br/> <br/>
+  Supersampling is useful because it can help to reduce the amount of aliasing artifacts that show up when rasterizing an image. In implementing supersampling, I ended up
+  overwriting part of the pipeline so that everything always goes through the supersample_buffer first before being resolved to the frame buffer, in order to
+  implement the optional task of making supersampling work for not just triangles, but points and lines as well.
+  </br> </br>
+  Supersampling is effectively equivalent to operating a box filter over the image to product anti-aliasing. Jaggies are lessened by blurring at the edges which smooth them out,
+  and results in a gradual gradient of color change which visually reduces the effect of sharp staircase edges, instead having intermediary colors that ease the transition and provides an anti-aliasing effect
+  that is especially noticeable at the edges.
+</p>
+
+<p><strong><u>Ex.</u></strong> Looking at the red triangle, the sharpness at the edges without supersampling is especially noticeable. But implement supersampling. and we immediately see the smoothing effect.</p>
+
+<div align="middle">
+  <table style="width=100%">
+    <tr>
+      <td>
+        <img src="images/nosuper.png" align="middle" width="400px"/>
+        <figcaption align="middle">No supersampling. Jaggies!</figcaption>
+      </td>
+    </tr>
+    <br/>
+    <tr>
+      <td>
+        <img src="images/super.png" align="middle" width="400px"/>
+        <figcaption align="middle">Supersampling implemented. Look at those smoothed edges!</figcaption>
+      </td>
+    </tr>
+  </table>
+</div>
+
+<h3 align="middle">Task 3: Transforms</h3>
+
+<p><strong><u>We all know how intelligent Berkeley students are. That's why for my robot, representing Berkeley as you can tell by its color scheme, I made it have a big head.
+Big head says hello!
+</u></strong> 
+</p>
+
+<div align="middle">
+  <table style="width=100%">
+    <tr>
+      <td>
+        <img src="images/default.png" align="middle" width="400px"/>
+        <figcaption align="middle">Default Robot</figcaption>
+      </td>
+      <td>
+        <img src="images/berkeley_brain.png" align="middle" width="400px"/>
+        <figcaption align="middle">Berkeley Big Brain</figcaption>
+      </td>
+    </tr>
+  </table>
+</div>
+
+<h3 align="middle">Task 4: Barycentric coordinates</h3>
+
+<p><strong><u>Implementation:</u></strong> Barycentric coordinates consist of a 3 element tuple, with each element ranging from [0,1] that acts a ratio representing how close a location is to each of one of the three vertices in a triangle.
+<br/> <br/>
+
+<img src="images/bary.png" align="middle" width="400px" margin="auto"/> <br/><br/>
+
+<p><strong><u>Ex.</u></strong></p>
+
+<div align="middle">
+  <table style="width=100%">
+    <tr>
+      <td>
+        <img src="images/round_boi.png" align="middle" width="400px"/>
+        <figcaption align="middle">round boi.</figcaption>
+      </td>
+    </tr>
+  </table>
+</div>
+
+
+<h3 align="middle">Task 5: "Pixel  sampling" for texture mapping</h3>
+
+<p><strong><u>Implementation:</u></strong> Pixel sampling interpolates based on the texture value of surrounding pixels in texture space.
+In nearest sampling, we just take the texture of the corresponding pixel that is the nearest. In bilinear sampling, we now take a set of
+four points that are closest and then do a weighted averaging of the four sample textures.
+
+Implementing nearest pixel sampling, we take the converted coordinates u,v and retrieve the texel
+located at the scaled width for u and scaled height for v.
+
+Implementing bilinear pixel sampling, we do the same as above, except now we retrieve the four closest texels. 
+With our four (u_00, u_10, u_01, u_11), we then do linear interpolation, first horizontally then vertically in order
+to get single weighted average color. Doing the interpolation horizontally first isn't neccessary, but the general convention
+is to do it this way.
+
+</p>
+
+<p><strong><u>Ex.</u></strong> Look at the upper area of the clock tower and see how with bilinear sampling, the interpolated values are much clearer and smooth compared the nearest
+  sampling which seems like there's a more distorted less clear view. The largest difference occurs when the sampling rate is low at 1. This is because at a sampling rate of 16, since
+supersampling is already a form of anti-aliasing, the benefits of pixel sampling start to get overshadowed. </p>
+
+<div align="middle">
+  <table style="width=100%">
+    <tr>
+      <td>
+        <img src="images/nearest_1.png" align="middle" width="400px"/>
+        <figcaption align="middle">Sampling rate: 1; nearest pixel sampling.</figcaption>
+      </td>
+      <td>
+        <img src="images/bilinear_1.png" align="middle" width="400px"/>
+        <figcaption align="middle">Sampling rate: 1; bilinear pixel sampling.</figcaption>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <img src="images/nearest_16.png" align="middle" width="400px"/>
+        <figcaption align="middle">Sampling rate: 16; nearest pixel sampling.</figcaption>
+      </td>
+      <td>
+        <img src="images/bilinear_16.png" align="middle" width="400px"/>
+        <figcaption align="middle">Sampling rate: 16; bilinear pixel sampling.</figcaption>
+      </td>
+    </tr>
+  </table>
+</div>
+
+<h3 align="middle">Part 6: "Level sampling" with mipmaps for texture mapping</h3>
+
+<p><strong><u>Implementation:</u></strong> Level sampling is like pixel sampling, an anti-aliasing technique, that works by interpolating between mipmaps of different levels.
+Implementing level sampling consists of three cases, zero level sampling / nearest level sampling / linear level sampling.   
+
+Zero level sampling, by its name, involves zero level sampling, and we simply sample based on the defined pixel sampling method given to us.
+Nearest level sampling involves taking a pixel's uv vector and pixel with delta added in the x-coordinate as well as y-coordinate's uv vectors. We take the max of 
+the either distance between (pixel_uv and pixel_plus_dx_uv) versus (pixel_uv and pixel_plus_dy_uv) and then apply a log to retrieve our level.
+Trilinear sampling is similar to nearest level sampling, except now when we get our level, we sample between level and level + 1, interpolating to get a weighted average of the two's texels.
+
+In level sampling, for nearest level sampling we take on increasing memory usage as we increase our sampling rate, which slows us down in favor of greater
+anti-aliasing effect. Trilinear sampling correspondingly requires double the amount of memory / computation as we effectively repeat nearest sampling and then average the two results.
+This, however, will provide the greatest and most accurate anti-aliasing effect. 
+</p>
+
+<p><strong><u>Ex.</u></strong> Comparison between differe pixel sampling and level sampling method combinations using a deformed Pikachu.</p>
+
+<div align="middle">
+  <table style="width=100%">
+    <tr>
+      <td>
+        <img src="images/lz_np.png" align="middle" width="400px"/>
+        <figcaption align="middle">Level Zero, Nearest Pixel Sampling</figcaption>
+      </td>
+      <td>
+        <img src="images/lz_lp.png" align="middle" width="400px"/>
+        <figcaption align="middle">Level Zero, Bilinear Pixel Sampling</figcaption>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <img src="images/nl_np.png" align="middle" width="400px"/>
+        <figcaption align="middle">Nearest Level, Nearest Pixel Sampling</figcaption>
+      </td>
+      <td>
+        <img src="images/nl_lp.png" align="middle" width="400px"/>
+        <figcaption align="middle">Nearest Level, Bilinear Pixel Sampling</figcaption>
+      </td>
+    </tr>
+  </table>
+</div>
+
+
+</div>
+</body>
+</html>

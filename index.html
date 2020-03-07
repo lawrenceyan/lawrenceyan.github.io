@@ -25,85 +25,104 @@
 <body>
 
 <h1 align="middle">CS 184: Computer Graphics and Imaging, Spring 2020</h1>
-<h1 align="middle">Project 1: Rasterizer</h1>
+<h1 align="middle">Project 2: Mesh Editing</h1>
 <h2 align="middle">Lawrence Yan</h2>
 
 <br/><br/>
 
-<div style="background-color:#FFA07A; padding: 30px">
+<div style="background-color:#4A412A; padding: 30px">
 
-<h3 align="middle">Task 1: Drawing Single-Color Triangles</h3>
+<h3 align="middle">Task 1: Bezier Curves with 1D de Casteljau Subdivision</h3>
 
-<p><strong><u>Implementation:</u></strong> Rasterizing a triangle is simply a matter of coloring the pixel locations that are within the triangle itself. We can do this determination of whether a point lies within a triangle by taking the dot product of the edge normals and the respective point vector 
-  from the vertice of the triangle to given point p, checking that every value is non-negative (this assumes of course that we are working with a fixed counterclockwise orientation). To handle the case where our triangle is in a 
-clockwise orientation, I created a helper function is_ccw() which I call at the beginning to determine my given triangle's orientation. In the case that the triangle is clockwise, I flip
-the signs of my resultant dot products. By bounding the pixels we look at to be limited to the [xMin, XMax] x-coordinate locations and [yMin, yMax] y-coordinate locations, where our Min/Max variables
-represent the minimum and maximum coordinates values of our triangle, our algorithm is guaranteed to be no worse than one that checks each sample within the bounding box of the triangle.</p>
-
-<p><strong><u>Extra Credit:</u></strong> We optimize by only sampling within a bounding box around our triangle based on its minimum / maximum x,y values. 
-  Notice that in calculating our dot products, our overall equation is linear and is affected only by a change in pixel x-coordinate, pixel y-coordinate, and subpixel placement.
-  Thus, we can avoid a huge amount of redundant calculation by just incrementing our dot product values, since we know our loops increment by 1 each time, so all we have to do is shift
-  by the specified weight, t01_norm_x for dx changes and t01_norm_y for dy changes. With optimizations implemented, I get approximately 10 times improvement in performance, with a run time 
-  of 3-4 milliseconds on average compared to the roughly ~30 +/- 5 milliseconds it takes when unoptimized.  
-  </p>
+<p><strong><u>Implementation:</u></strong> de Casteljau's algorithm consists of approximating a curve by successively taking a given set of points and doing linear interpolation every point i and its neighbor point i+1. Through recursive subdivision we ultimately
+    end up with a single point at the end, which by definition will be a point on our curve. To define a curve of degree n, we input a required set of n+1 control points.</p>
 
 <div align="middle">
   <table style="width=100%">
     <tr>
       <td>
-        <img src="images/timing.png" align="middle" width="400px"/>
-        <figcaption align="middle">Testing our optimization with clock(), I placed my timing around the svg.draw() command within DrawRend::redraw()</figcaption>
+        <img src="images/level0.png" align="middle" width="400px"/>
+        <figcaption align="middle">Level 0 of our evaluation</figcaption>
       </td>
     </tr>
+
     <br/>
     <tr>
       <td>
-        <img src="images/basic.png" align="middle" width="400px"/>
-        <figcaption align="middle">Basic triangle. Jaggies!</figcaption>
+        <img src="images/level1.png" align="middle" width="400px"/>
+        <figcaption align="middle">Level 1 of our evaluation</figcaption>
       </td>
     </tr>
+
+    <br/>
+    <tr>
+      <td>
+        <img src="images/level2.png" align="middle" width="400px"/>
+        <figcaption align="middle">Level 2 of our evaluation</figcaption>
+      </td>
+    </tr>
+
+    <br/>
+    <tr>
+      <td>
+        <img src="images/level3.png" align="middle" width="400px"/>
+        <figcaption align="middle">Level 3 of our evaluation</figcaption>
+      </td>
+    </tr>
+
+    <br/>
+    <tr>
+      <td>
+        <img src="images/level4.png" align="middle" width="400px"/>
+        <figcaption align="middle">Level 4 of our evaluation</figcaption>
+      </td>
+    </tr>
+
+    <br/>
+    <tr>
+      <td>
+        <img src="images/level5.png" align="middle" width="400px"/>
+        <figcaption align="middle">Level 5 of our evaluation. Notice how our final point is directly on the curve itself.</figcaption>
+      </td>
+    </tr>
+
+    <br/>
+    <tr>
+      <td>
+        <img src="images/slightly_modified.png" align="middle" width="400px"/>
+        <figcaption align="middle">A slightly modified degree 5 curve created by moving the original control points around / modifying the t parameter.</figcaption>
+      </td>
+    </tr>
+
   </table>
 </div>
 
 
-<h3 align="middle">Task 2: Antialiasing by Supersampling</h3>
+<h3 align="middle">Task 2: Bezier Surfaces</h3>
 
-<p><strong><u>Implementation:</u></strong> I implemented supersampling by looking at a set of subpixels within each pixel equal to the sample_rate given to me within a sqrt(sample_rate) x 
-  sqrt(sample_rate) subpixel grid. For every subpixel I then sampled, adding each color to a supersample_buffer I used to store the individual colors. When complete, I resolve to my frame buffer
-  which is what is exactly shown on the screen, averaging the subpixel colors for each pixel. <br/> <br/>
-  Supersampling is useful because it can help to reduce the amount of aliasing artifacts that show up when rasterizing an image. In implementing supersampling, I ended up
-  overwriting part of the pipeline so that everything always goes through the supersample_buffer first before being resolved to the frame buffer, in order to
-  implement the optional task of making supersampling work for not just triangles, but points and lines as well.
-  </br> </br>
-  Supersampling is effectively equivalent to operating a box filter over the image to product anti-aliasing. Jaggies are lessened by blurring at the edges which smooth them out,
-  and results in a gradual gradient of color change which visually reduces the effect of sharp staircase edges, instead having intermediary colors that ease the transition and provides an anti-aliasing effect
-  that is especially noticeable at the edges.
+<p><strong><u>Implementation:</u></strong> The de Casteljau algorithm can be extended to surfaces by implementing an NxM grid of control points where we have N sets of M control points. 
+  Each set of M control points define a curve which we paramterize by u. We apply the 1D de Casteljau algorithm as normal to evaluate to a single final point which lies on the curve. Do this N times for each of the N sets.
+  Then consider the now remaining N points, and run the 1D de Casteljau algorithm now parameterizing by v. After succesive evaluation, our N remaining points are interpolated into a final single point which lies on the curve
+  at the parameter v.
 </p>
 
-<p><strong><u>Ex.</u></strong> Looking at the red triangle, the sharpness at the edges without supersampling is especially noticeable. But implement supersampling. and we immediately see the smoothing effect.</p>
-
 <div align="middle">
   <table style="width=100%">
     <tr>
       <td>
-        <img src="images/nosuper.png" align="middle" width="400px"/>
-        <figcaption align="middle">No supersampling. Jaggies!</figcaption>
-      </td>
-    </tr>
-    <br/>
-    <tr>
-      <td>
-        <img src="images/super.png" align="middle" width="400px"/>
-        <figcaption align="middle">Supersampling implemented. Look at those smoothed edges!</figcaption>
+        <img src="images/teapot.png" align="middle" width="400px"/>
+        <figcaption align="middle">Teapot!</figcaption>
       </td>
     </tr>
   </table>
 </div>
 
-<h3 align="middle">Task 3: Transforms</h3>
+<h3 align="middle">Task 3:  Area-Weighted Vertex Normals</h3>
 
-<p><strong><u>We all know how intelligent Berkeley students are. That's why for my robot, representing Berkeley as you can tell by its color scheme, I made it have a big head.
-Big head says hello!
+<p><strong><u> Given our vertex, we take the cross product of the two vectors representing our current triangle in order to determine it's area. Additionally we get the normal vector from the triangle's
+  face. Multiply by the cross product we found in order to do weight by area. Repeat this for all the triangles of our vertex. Sum together the values, then divide by the total area sum of all the triangles in order
+  to get a final weighted average of the vertex normals. Return the normalized vector of this weighted average of vertex normals.
+
 </u></strong> 
 </p>
 
@@ -111,120 +130,186 @@ Big head says hello!
   <table style="width=100%">
     <tr>
       <td>
-        <img src="images/default.png" align="middle" width="400px"/>
-        <figcaption align="middle">Default Robot</figcaption>
+        <img src="images/without_vertex_normal.png" align="middle" width="400px"/>
+        <figcaption align="middle">Without Vertex Normals</figcaption>
       </td>
       <td>
-        <img src="images/berkeley_brain.png" align="middle" width="400px"/>
-        <figcaption align="middle">Berkeley Big Brain</figcaption>
+        <img src="images/with_vertex_normal.png" align="middle" width="400px"/>
+        <figcaption align="middle">With Vertex Normals</figcaption>
       </td>
     </tr>
   </table>
 </div>
 
-<h3 align="middle">Task 4: Barycentric coordinates</h3>
+<h3 align="middle">Task 4: Edge Flips</h3>
 
-<p><strong><u>Implementation:</u></strong> Barycentric coordinates consist of a 3 element tuple, with each element ranging from [0,1] that acts a ratio representing how close a location is to each of one of the three vertices in a triangle.
-<br/> <br/>
+<p><strong><u>Implementation:</u></strong> Following the recommended method of drawing out and labeling two connected triangles with every vertex, edge, face, and half-edge, I then proceeded to manually
+  do a single edge flip while seeing how the results worked for new connections between vertex to half-edges to edges to faces respectively. In my first attempt, I originally tried to just play it by ear,
+  iteratively editing the pointers. But then I found that I ran into the problem of losing track of the original connections because once I edited something, this would make me lose access to some other
+  pointers. The correct way turned out to be to have two stages. First is to collect all the elements and make sure I have access to everything. Then, edit everything afterwards. <br/> <br/> 
 
-<img src="images/bary.png" align="middle" width="400px" margin="auto"/> <br/><br/>
-
-<p><strong><u>Ex.</u></strong></p>
 
 <div align="middle">
   <table style="width=100%">
     <tr>
       <td>
-        <img src="images/round_boi.png" align="middle" width="400px"/>
-        <figcaption align="middle">round boi.</figcaption>
+        <img src="images/before_flip.png" align="middle" width="400px"/>
+        <figcaption align="middle">Without Vertex Normals</figcaption>
+      </td>
+      <td>
+        <img src="images/after_flip.png" align="middle" width="400px"/>
+        <figcaption align="middle">With Vertex Normals</figcaption>
       </td>
     </tr>
   </table>
 </div>
 
 
-<h3 align="middle">Task 5: "Pixel  sampling" for texture mapping</h3>
+<h3 align="middle">Task 5: Edge Splits</h3>
 
-<p><strong><u>Implementation:</u></strong> Pixel sampling interpolates based on the texture value of surrounding pixels in texture space.
-In nearest sampling, we just take the texture of the corresponding pixel that is the nearest. In bilinear sampling, we now take a set of
-four points that are closest and then do a weighted averaging of the four sample textures.
+<p><strong><u>Implementation:</u></strong> This one was a bit of a doozy. I originally tried to delete the old edge I didn't need anymore, and then create two new edges to replace it. 
+  But I came into a huge amount of bugs with deleting. After some drawing, I realised I didn't need to actually delete anything! I just keep the old edge and just add a single new edge, 
+  while reusing the old edge by transforming to its half of the edge. So with my given edge e0, for example, I keep the e0 and create a new edge e0_r to the right of e0. e0 is now the left half 
+  and e0_r is the right half, splitting the my original edge into two halves.
 
-Implementing nearest pixel sampling, we take the converted coordinates u,v and retrieve the texel
-located at the scaled width for u and scaled height for v.
-
-Implementing bilinear pixel sampling, we do the same as above, except now we retrieve the four closest texels. 
-With our four (u_00, u_10, u_01, u_11), we then do linear interpolation, first horizontally then vertically in order
-to get single weighted average color. Doing the interpolation horizontally first isn't neccessary, but the general convention
-is to do it this way.
-
+  As a general summary, the key was doing things similarly to how edge flips were done in my previous. I first set up all the potential pointers I would need to have access to. Then, because I would have
+  to add in new edges and a vertex, I created them. Once this setup was finished, I then drew up two triangles and manually figured exactly how each and every thing would change once I split. Having everything
+  explicitly laid out, I then was able to with relative ease, set all the new connections between my edges, vertices, halfedges, and faces by consulting my drawing.
 </p>
 
-<p><strong><u>Ex.</u></strong> Look at the upper area of the clock tower and see how with bilinear sampling, the interpolated values are much clearer and smooth compared the nearest
-  sampling which seems like there's a more distorted less clear view. The largest difference occurs when the sampling rate is low at 1. This is because at a sampling rate of 16, since
-supersampling is already a form of anti-aliasing, the benefits of pixel sampling start to get overshadowed. </p>
 
 <div align="middle">
   <table style="width=100%">
     <tr>
       <td>
-        <img src="images/nearest_1.png" align="middle" width="400px"/>
-        <figcaption align="middle">Sampling rate: 1; nearest pixel sampling.</figcaption>
+        <img src="images/before_edgesplit.png" align="middle" width="400px"/>
+        <figcaption align="middle">Before edge split.</figcaption>
       </td>
       <td>
-        <img src="images/bilinear_1.png" align="middle" width="400px"/>
-        <figcaption align="middle">Sampling rate: 1; bilinear pixel sampling.</figcaption>
+        <img src="images/after_edgesplit.png" align="middle" width="400px"/>
+        <figcaption align="middle">After edge split.</figcaption>
       </td>
     </tr>
     <tr>
       <td>
-        <img src="images/nearest_16.png" align="middle" width="400px"/>
-        <figcaption align="middle">Sampling rate: 16; nearest pixel sampling.</figcaption>
-      </td>
-      <td>
-        <img src="images/bilinear_16.png" align="middle" width="400px"/>
-        <figcaption align="middle">Sampling rate: 16; bilinear pixel sampling.</figcaption>
+        <img src="images/after_edgesplit_plus_flip.png" align="middle" width="400px"/>
+        <figcaption align="middle">After edge splits and flips.</figcaption>
       </td>
     </tr>
   </table>
 </div>
 
-<h3 align="middle">Part 6: "Level sampling" with mipmaps for texture mapping</h3>
+<h3 align="middle">Task 6: Loop Subdivision for Mesh Upsampling</h3>
 
-<p><strong><u>Implementation:</u></strong> Level sampling is like pixel sampling, an anti-aliasing technique, that works by interpolating between mipmaps of different levels.
-Implementing level sampling consists of three cases, zero level sampling / nearest level sampling / linear level sampling.   
+<p><strong><u>Implementation:</u></strong> AHHHHHHHHHHHHHHHHHHHHHHHHHHHH! THIS TOOK ME SO LONG TO DO, AND THE BUG ULTIMATELY TURNED OUT TO BE SUCH A SMALL SIMPLE THING. AHHHHHHHHHHHHHHHHHHHHHH. Okay, with my
+  pseudo mental breakdown out of the way, I think a lesson to be learned here when working with pointers is to be absolutely meticulous from the very beginning so that later down the line, it's not an issue. My bug ended up being due to a misplaced edge pointer assignment to the outside facing half-edge of a triangle that resulted from an issue with how I visualized my flip and split functions (I drew two
+  figure transitions, one for flipping and one for splitting, and there was a slight difference in how the end results were for the outside facing half-edges in terms of notation).
 
-Zero level sampling, by its name, involves zero level sampling, and we simply sample based on the defined pixel sampling method given to us.
-Nearest level sampling involves taking a pixel's uv vector and pixel with delta added in the x-coordinate as well as y-coordinate's uv vectors. We take the max of 
-the either distance between (pixel_uv and pixel_plus_dx_uv) versus (pixel_uv and pixel_plus_dy_uv) and then apply a log to retrieve our level.
-Trilinear sampling is similar to nearest level sampling, except now when we get our level, we sample between level and level + 1, interpolating to get a weighted average of the two's texels.
-
-In level sampling, for nearest level sampling we take on increasing memory usage as we increase our sampling rate, which slows us down in favor of greater
-anti-aliasing effect. Trilinear sampling correspondingly requires double the amount of memory / computation as we effectively repeat nearest sampling and then average the two results.
-This, however, will provide the greatest and most accurate anti-aliasing effect. 
+  To implement loop subdivision. we convert each triangle into four smaller triangles by connecting the edge midpoints, and then updating positions weighted like below.
 </p>
-
-<p><strong><u>Ex.</u></strong> Comparison between differe pixel sampling and level sampling method combinations using a deformed Pikachu.</p>
 
 <div align="middle">
   <table style="width=100%">
     <tr>
       <td>
-        <img src="images/lz_np.png" align="middle" width="400px"/>
-        <figcaption align="middle">Level Zero, Nearest Pixel Sampling</figcaption>
-      </td>
-      <td>
-        <img src="images/lz_lp.png" align="middle" width="400px"/>
-        <figcaption align="middle">Level Zero, Bilinear Pixel Sampling</figcaption>
+        <img src="images/weights.jpg" align="middle" width="400px"/>
       </td>
     </tr>
+  </table>
+</div>
+
+
+<p>
+It ends up being much simpler in practice though, first to calculate all the new positions before we do anything else. This is because splitting/flipping creates many new edges and vertices, making traversal
+a more complicated process. To calculate new positions we iterate through all the vertices, calculating each vertex's new position as well as setting its boolean variable isNew to false since we know these will all be original vertices.
+Then, we do the same for edges, iterating through all of them and calculating the new positions of the new vertices that will be placed at the midpoint of each edge once split. We make sure to set the boolean variable isNew to false for
+each of these edges as well since they are all original.
+</p>
+
+<div align="middle">
+  <table style="width=100%">
     <tr>
       <td>
-        <img src="images/nl_np.png" align="middle" width="400px"/>
-        <figcaption align="middle">Nearest Level, Nearest Pixel Sampling</figcaption>
+        <img src="images/splitflip.jpg" align="middle" width="400px"/>
+        <figcaption align="middle">Split every black edge. Flip every blue edge connecting and old and new vertex.</figcaption>
+      </td>
+    </tr>
+  </table>
+</div>
+
+<p>
+  We finish off by splitting our edge, using the condition that any original edge has original vertices on both sides with isNew being false, in order to determine what edges to split
+  as we iterate through. This is important because otherwise, we would end up in an infinite loop as our splitedge() continually adds new edges to our iterable. Since we conveniently
+  return the new vertex created after running splitEdge(), we can take the time here to set the newPosition of our new vertex to the newPositon we calculated and stored in the edge.
+  Next we flip any new edge that is connected by old and new vertices.
+
+  Finally, we iterate through our vertices and set each vertex's position to its newPosition value.
+</p>
+
+<p> Notice how after we subdivide, our corners and edges become very smooth. The cube below, which starts out with extremely sharp edges and corners is a perfect example.</p>
+
+<div align="middle">
+  <table style="width=100%">
+    <tr>
+      <td>
+        <img src="images/splitflip.jpg" align="middle" width="400px"/>
+        <figcaption align="middle">Split every black edge. Flip every blue edge connecting and old and new vertex.</figcaption>
+      </td>
+    </tr>
+  </table>
+</div>
+
+<p> Pre-splitting definitely helps to conserve some sharpness, as can be seen when done on the cube below. </p>
+
+<div align="middle">
+  <table style="width=100%">
+    <tr>
+      <td>
+        <img src="images/presplit_0.png" align="middle" width="400px"/>
+        <figcaption align="middle">We pre-split our edge pre-emptively</figcaption>
       </td>
       <td>
-        <img src="images/nl_lp.png" align="middle" width="400px"/>
-        <figcaption align="middle">Nearest Level, Bilinear Pixel Sampling</figcaption>
+        <img src="images/presplit_subdivide.png" align="middle" width="400px"/>
+        <figcaption align="middle">After subdividing.</figcaption>
+      </td>
+      <td>
+        <img src="images/presplit_subtwice.png" align="middle" width="400px"/>
+        <figcaption align="middle">After subdividing again. Notice the much sharper corner.</figcaption>
+      </td>
+    </tr>
+  </table>
+</div>
+
+<p> If we run loop subdivision on our cube, it's pretty clear that it becomes slightly asymmetric. </p>
+
+<div align="middle">
+  <table style="width=100%">
+    <tr>
+      <td>
+        <img src="images/asym_0.png" align="middle" width="400px"/>
+        <figcaption align="middle">Look at the top corner of our cube.</figcaption>
+      </td>
+      <td>
+        <img src="images/asym_1.png" align="middle" width="400px"/>
+        <figcaption align="middle">After subdividing, the same corner.</figcaption>
+      </td>
+    </tr>
+  </table>
+</div>
+
+<p> The issue has to do with the fact that our corner, when calculate its new position is more heavily weighted towards a direction because its two edges both lie within the 
+  same z-coordinate value. This cause a "greater pull" in that direction comparatively. To fix this, what we can do is to pre-split every face edge containing the diagonal edge,
+  which helps to remove this comparatively larger pull and equalizing things. 
+</p>
+
+<div align="middle">
+  <table style="width=100%">
+    <tr>
+      <td>
+        <img src="images/splitflip.jpg" align="middle" width="400px"/>
+        <figcaption align="middle">Subdivide once. Notice now, how the cube looks much more symmetrical since splitting the diagonal edge, ensures we're equalizing the weight calculation
+          for new position.
+        </figcaption>
       </td>
     </tr>
   </table>
