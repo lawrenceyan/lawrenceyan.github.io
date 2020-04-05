@@ -39,9 +39,7 @@
   we only looks at red wavelengths, blue wavelengths, and green wavelengths. Additionally we use an alpha value that when 
   set to smaller values makes our object surface increasingly glossy, and with higher values doing the opposite resulting in a increasingly diffuse
   surface. As a final step, we take our cosine sampling and replace it with a new importance sampling which converges a to more optimal solution in much less time, because we make our pdf resemble the normal
-  distribution as closely as possible. </p>
-
-
+  distribution as closely as possible. 
 <div align="middle">
   <table style="width=100%">
     <tr>
@@ -87,7 +85,7 @@
     <tr>
       <td>
         <img src="images/bunny_importance.png" align="middle" width="400px"/>
-        <figcaption align="middle">With importance sampling, the rabbit surface converges much more optimally resulting a signficantly better drawing of the rabbit even at low settings.</figcaption>
+        <figcaption align="middle">With importance sampling, the rabbit surface converges much more optimally resulting in a signficantly better drawing of the rabbit even with our lowered settings.</figcaption>
       </td>
     </tr>
 
@@ -95,20 +93,18 @@
     <tr>
       <td>
         <img src="images/d_silver_05.png" align="middle" width="400px"/>
-        <figcaption align="middle">Silver(Ag). eta values = (0.059193 0.059881 0.047366). k values = (4.1283 3.5892 2.8132) </figcaption>
+        <figcaption align="middle">Silver(Ag): eta values -> (0.059193 0.059881 0.047366). k values -> (4.1283 3.5892 2.8132). </figcaption>
       </td>
     </tr>
 
   </table>
 </div>
-
+</p>
 
 <h3 align="middle">Task 4: Depth of Field</h3>
 
 <p><strong><u>Implementation:</u></strong> We've been working with a "pinhole" digicam simulation which assumes everything is perfectly in focus. In an actual camera though, there is a field of focus, which
   we can now simulate. A theoretically optimal thin-lens has no actual thickness. Our lens allows us to focus and blur our image to create different depth of field scenarios.
-</p>
-
 <div align="middle">
   <table style="width=100%">
     <tr>
@@ -176,6 +172,8 @@
 
   </table>
 </div>
+</p>
+
 
 </body>
 </html>
