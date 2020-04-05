@@ -37,7 +37,7 @@
 <p><strong><u>Implementation:</u></strong> We implement a sampler based on utilizing a Beckmann distribution
   in order to approximate our normal distribution function. We have individual functions for determining our NDF (Normal Distribution Function) and fresnel term. In determining our fresnel term, to simplify things,
   we only looks at red wavelengths, blue wavelengths, and green wavelengths. Additionally we use an alpha value that when 
-  set to smaller values makes our object surface increasingly glossy with higher values doing the opposite resulting in a increasingly diffuse
+  set to smaller values makes our object surface increasingly glossy, and with higher values doing the opposite resulting in a increasingly diffuse
   surface. As a final step, we take our cosine sampling and replace it with a new importance sampling which converges a to more optimal solution in much less time, because we make our pdf resemble the normal
   distribution as closely as possible. </p>
 
