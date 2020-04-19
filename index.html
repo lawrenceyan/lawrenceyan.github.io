@@ -16,7 +16,7 @@
     font-family: 'Open Sans', sans-serif;
   }
 </style>
-<title>CS 184 3-2 Path Tracing Part II</title>
+<title>CS 184 4 Cloth Simulation</title>
 <meta http-equiv="content-type" content="text/html; charset=utf-8" />
 <link href="https://fonts.googleapis.com/css?family=Open+Sans|Roboto" rel="stylesheet"/>
 </head>
@@ -25,154 +25,213 @@
 <body>
 
 <h1 align="middle">CS 184: Computer Graphics and Imaging, Spring 2020</h1>
-<h1 align="middle">Project 3-2: Path Tracing Part II</h1>
+<h1 align="middle">Assignment 4: Cloth Simulation</h1>
 <h2 align="middle">Lawrence Yan</h2>
 
 <br/><br/>
 
 <div style="background-color: #FAB000; padding: 30px">
 
-<h3 align="middle">Task 2: Microfacet</h3>
+<h3 align="middle">Part 1: Masses and springs</h3>
 
-<p><strong><u>Implementation:</u></strong> We implement a sampler based on utilizing a Beckmann distribution
-  in order to approximate our normal distribution function. We have individual functions for determining our NDF (Normal Distribution Function) and fresnel term. In determining our fresnel term, to simplify things,
-  we only looks at red wavelengths, blue wavelengths, and green wavelengths. Additionally we use an alpha value that when 
-  set to smaller values makes our object surface increasingly glossy, and with higher values doing the opposite resulting in a increasingly diffuse
-  surface. As a final step, we take our cosine sampling and replace it with a new importance sampling which converges a to more optimal solution in much less time, because we make our pdf resemble the normal
-  distribution as closely as possible. 
+<p><strong><u>Implementation:</u></strong> We represent a piece of cloth using a grid of point Massesand interconnecting springs of type corresponding
+  to shearing springs, bending springs, and structural springs.</p>
+
 <div align="middle">
   <table style="width=100%">
     <tr>
       <td>
-        <img src="images/d_005.png" align="middle" width="400px"/>
-        <figcaption align="middle">a = 0.005. Very shiny and glossy, mirror like in nature. </figcaption>
+        <img src="images/cloth.png" align="middle" width="400px"/>
+        <figcaption align="middle">The cloth wireframe. </figcaption>
       </td>
     </tr>
 
     <br/>
     <tr>
       <td>
-        <img src="images/d_05.png" align="middle" width="400px"/>
-        <figcaption align="middle">a = 0.05. Still noticeably shiny and glossy, but definitely not as perfectly mirror like.</figcaption>
+        <img src="images/cloth_no_shear.png" align="middle" width="400px"/>
+        <figcaption align="middle">1) Without any shearing constraints.</figcaption>
       </td>
     </tr>
 
     <br/>
     <tr>
       <td>
-        <img src="images/d_25.png" align="middle" width="400px"/>
-        <figcaption align="middle">a = 0.25. Beginning to look more rough and diffuse.</figcaption>
+        <img src="images/cloth_only_shear.png" align="middle" width="400px"/>
+        <figcaption align="middle">2) With only shearing constraints.</figcaption>
       </td>
     </tr>
 
     <br/>
     <tr>
       <td>
-        <img src="images/d_5.png" align="middle" width="400px"/>
-        <figcaption align="middle">a = 0.5. Signficantly diffuse and rough. We can see the surface material very clearly with little to no gloss.</figcaption>
+        <img src="images/cloth_all_on.png" align="middle" width="400px"/>
+        <figcaption align="middle">3) With all constraints.</figcaption>
       </td>
     </tr>
-
-    <br/>
-    <tr>
-      <td>
-        <img src="images/bunny_cosine.png" align="middle" width="400px"/>
-        <figcaption align="middle">Cosine sampling is clearly inferior, with increased noise and much lower convergence resulting in low image quality.</figcaption>
-      </td>
-    </tr>
-
-    <br/>
-    <tr>
-      <td>
-        <img src="images/bunny_importance.png" align="middle" width="400px"/>
-        <figcaption align="middle">With importance sampling, the rabbit surface converges much more optimally resulting in a signficantly better drawing of the rabbit even with our lowered settings.</figcaption>
-      </td>
-    </tr>
-
-    <br/>
-    <tr>
-      <td>
-        <img src="images/d_silver_05.png" align="middle" width="400px"/>
-        <figcaption align="middle">Silver(Ag): eta values -> (0.059193 0.059881 0.047366). k values -> (4.1283 3.5892 2.8132). </figcaption>
-      </td>
-    </tr>
-
   </table>
 </div>
-</p>
 
-<h3 align="middle">Task 4: Depth of Field</h3>
+<h3 align="middle">Part 2: Simulation via numerical integration</h3>
 
-<p><strong><u>Implementation:</u></strong> We've been working with a "pinhole" digicam simulation which assumes everything is perfectly in focus. In an actual camera though, there is a field of focus, which
-  we can now simulate. A theoretically optimal thin-lens has no actual thickness. Our lens allows us to focus and blur our image to create different depth of field scenarios.
-<div align="middle">
+<p><strong><u>Implementation:</u></strong> We utilize
+  Verlet integration to simulate the effect of force applied
+  to the cloth in motion. We add an additional constraint
+  based on the SIGGRAPH 1995 Provot paper that limits the distance
+  between any two point masses' positions such that the spring's length is at most
+  1.1 times the spring's resting length. </p>
+
+<h4>Modifying spring constant <code>ks</code></h4>  
+<div class="bottom-padding-20 full-width" align="middle">
   <table style="width=100%">
     <tr>
       <td>
-        <img src="images/dragon_focus_13.png" align="middle" width="400px"/>
-        <figcaption align="middle">Focus Stack: focus = 13, aperture = 0.03</figcaption>
+        <img src="images/50ks.png" align="middle" width="400px"/>
+        <figcaption align="middle">ks = 50</figcaption>
       </td>
     </tr>
 
     <br/>
     <tr>
       <td>
-        <img src="images/dragon_focus_3.png" align="middle" width="400px"/>
-        <figcaption align="middle">Focus Stack: focus = 3, aperture = 0.03</figcaption>
+        <img src="images/500ks.png" align="middle" width="400px"/>
+        <figcaption align="middle">ks = 500</figcaption>
       </td>
     </tr>
 
     <br/>
     <tr>
       <td>
-        <img src="images/dragon_focus_05.png" align="middle" width="400px"/>
-        <figcaption align="middle">Focus Stack: focus = 0.5, aperture = 0.03</figcaption>
+        <img src="images/5000ks.png" align="middle" width="400px"/>
+        <figcaption align="middle">ks = 5000</figcaption>
       </td>
     </tr>
+  </table>
+ </div>
+  <p>
+      The lower the ks value, the more visibly lower the cloth droops as the springs are less constrained and can
+      thus more freely move and lengthen. One visual side effect of this as well seems to be the creation
+      of what seems like wrinkles showed up.
+  </p>
 
-    <br/>
+  <h4>Modifying density parameter</h4>
+  <div class="bottom-padding-20 full-width" align="middle">  
+  <table>
     <tr>
       <td>
-        <img src="images/dragon_focus_02.png" align="middle" width="400px"/>
-        <figcaption align="middle">Focus Stack: focus = 0.2. aperture = 0.03</figcaption>
+        <img src="images/15density.png" align="middle" width="400px"/>
+        <figcaption align="middle">density = 15</figcaption>
       </td>
     </tr>
-
-    <br/>
     <tr>
       <td>
-        <img src="images/d_ap_525.png" align="middle" width="400px"/>
-        <figcaption align="middle">aperture = 0.0525, focus = 1.25</figcaption>
+        <img src="images/150density.png" align="middle" width="400px"/>
+        <figcaption align="middle">density = 150</figcaption>
       </td>
     </tr>
-
-    <br/>
     <tr>
       <td>
-        <img src="images/d_ap_25.png" align="middle" width="400px"/>
-        <figcaption align="middle">aperture = 0.25, focus = 1.25</figcaption>
+        <img src="images/1500density.png" align="middle" width="400px"/>
+        <figcaption align="middle">density = 1500</figcaption>
       </td>
     </tr>
-
-    <br/>
-    <tr>
-      <td>
-        <img src="images/d_ap_50.png" align="middle" width="400px"/>
-        <figcaption align="middle">aperture = 0.5, focus = 1.25</figcaption>
-      </td>
-    </tr>
-
-    <br/>
-    <tr>
-      <td>
-        <img src="images/d_ap_100.png" align="middle" width="400px"/>
-        <figcaption align="middle">aperture = 1, focus = 1.25</figcaption>
-      </td>
-    </tr>
-
   </table>
 </div>
+<p>
+  Changing density seems to have a similar effect to changing ks, except in the opposite direction.
+  So with a density of 15, we see results similar to a ks of 5000 from, where the cloth is relatively rigid looking without many 
+  wrinkles or droops. As density increases, we see the cloth increasingly droop and lower with more wrinkles.
 </p>
+
+<h4>Modifying damping</h4>
+<div class="bottom-padding-20 full-width" align="middle">
+  <table>
+      <tr>
+          <td>
+              <img src="images/damp045977.png" align="middle" width="480px"/>
+              <figcaption align="middle">damping at 0.045977</figcaption>
+          </td>
+          <td>
+              <img src="images/damp885057.png" align="middle" width=480px"/>
+              <figcaption align="middle">damping at 0.885057</figcaption>
+          </td>
+      </tr>
+  </table>
+</div>
+<p> 
+  The damping effect seems to work well in its definition, i.e. to "dampen" the effect of motion. With a low damping value,
+  the cloth almost acts more like the surface of water in capacity like a fluid. With a higher damping value, we see a return to rigidity
+  and stiffness with little to no wrinkles and drooping.
+</p>
+
+<h4>Final resting state!</h4>
+<div class="bottom-padding-20 full-width" align="middle">
+  <img src="images/final.png" align="middle" width="700px"/>
+</div>
+
+
+</div>
+
+<h3 align="middle">Part 3: Handling collisions with other objects</h3>
+
+<div class="bottom-padding-20 full-width" align="middle">
+  <table>
+      <tr>
+          <td>
+              <img src="images/sphere500.png" align="middle" width="480px"/>
+              <figcaption align="middle">ks=500</figcaption>
+          </td>
+          <td>
+              <img src="images/sphere5000.png" align="middle" width=480px"/>
+              <figcaption align="middle">ks=5000</figcaption>
+          </td>
+      </tr>
+      <tr>
+          <td>
+              <img src="images/sphere50000.png" align="middle" width="480px"/>
+              <figcaption align="middle">ks=50000</figcaption>
+          </td>
+          <td>
+              <img src="images/part3/peaceful_plane.png" align="middle" width="480px"/>
+              <figcaption align="middle">A peacefully resting plane.</figcaption>
+          </td>
+      </tr>
+  </table>
+</div>
+
+<h4>Part 4: Handling self-collisions</h4>
+<div class="bottom-padding-20 full-width" align="middle">
+  <table style="width=100%">
+    <tr>
+      <td>
+        <img src="images/fall_0.png" align="middle" width="400px"/>
+        <figcaption align="middle">Early</figcaption>
+      </td>
+    </tr>
+
+    <br/>
+    <tr>
+      <td>
+        <img src="images/fall_1.png" align="middle" width="400px"/>
+        <figcaption align="middle">Initial Self-Collision</figcaption>
+      </td>
+    </tr>
+
+    <br/>
+    <tr>
+      <td>
+        <img src="images/fall_2.png" align="middle" width="400px"/>
+        <figcaption align="middle">Restful State</figcaption>
+      </td>
+    </tr>
+  </table>
+ </div>
+ <p>
+  As we see from the above screenshots, the higher the density, the stiffer and heavier the cloth with it piling together into a much smaller
+  area of space that's narrower. Likewise with a change in ks, the greater the ks, the stiffer the cloth seems to look and act, and the more bunched
+  up it becomes.
+ </p>
+
 
 
 </body>

@@ -1,0 +1,179 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+<style>
+  body {
+    padding: 100px;
+    width: 1000px;
+    margin: auto;
+    text-align: left;
+    font-weight: 300;
+    font-family: 'Roboto', sans-serif;
+    color: #121212;
+    background-color:#eaf7f6;
+  }
+  h1, h2, h3, h4 {
+    font-family: 'Open Sans', sans-serif;
+  }
+</style>
+<title>CS 184 3-2 Path Tracing Part II</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link href="https://fonts.googleapis.com/css?family=Open+Sans|Roboto" rel="stylesheet"/>
+</head>
+
+
+<body>
+
+<h1 align="middle">CS 184: Computer Graphics and Imaging, Spring 2020</h1>
+<h1 align="middle">Project 3-2: Path Tracing Part II</h1>
+<h2 align="middle">Lawrence Yan</h2>
+
+<br/><br/>
+
+<div style="background-color: #FAB000; padding: 30px">
+
+<h3 align="middle">Task 2: Microfacet</h3>
+
+<p><strong><u>Implementation:</u></strong> We implement a sampler based on utilizing a Beckmann distribution
+  in order to approximate our normal distribution function. We have individual functions for determining our NDF (Normal Distribution Function) and fresnel term. In determining our fresnel term, to simplify things,
+  we only looks at red wavelengths, blue wavelengths, and green wavelengths. Additionally we use an alpha value that when 
+  set to smaller values makes our object surface increasingly glossy, and with higher values doing the opposite resulting in a increasingly diffuse
+  surface. As a final step, we take our cosine sampling and replace it with a new importance sampling which converges a to more optimal solution in much less time, because we make our pdf resemble the normal
+  distribution as closely as possible. 
+<div align="middle">
+  <table style="width=100%">
+    <tr>
+      <td>
+        <img src="images/d_005.png" align="middle" width="400px"/>
+        <figcaption align="middle">a = 0.005. Very shiny and glossy, mirror like in nature. </figcaption>
+      </td>
+    </tr>
+
+    <br/>
+    <tr>
+      <td>
+        <img src="images/d_05.png" align="middle" width="400px"/>
+        <figcaption align="middle">a = 0.05. Still noticeably shiny and glossy, but definitely not as perfectly mirror like.</figcaption>
+      </td>
+    </tr>
+
+    <br/>
+    <tr>
+      <td>
+        <img src="images/d_25.png" align="middle" width="400px"/>
+        <figcaption align="middle">a = 0.25. Beginning to look more rough and diffuse.</figcaption>
+      </td>
+    </tr>
+
+    <br/>
+    <tr>
+      <td>
+        <img src="images/d_5.png" align="middle" width="400px"/>
+        <figcaption align="middle">a = 0.5. Signficantly diffuse and rough. We can see the surface material very clearly with little to no gloss.</figcaption>
+      </td>
+    </tr>
+
+    <br/>
+    <tr>
+      <td>
+        <img src="images/bunny_cosine.png" align="middle" width="400px"/>
+        <figcaption align="middle">Cosine sampling is clearly inferior, with increased noise and much lower convergence resulting in low image quality.</figcaption>
+      </td>
+    </tr>
+
+    <br/>
+    <tr>
+      <td>
+        <img src="images/bunny_importance.png" align="middle" width="400px"/>
+        <figcaption align="middle">With importance sampling, the rabbit surface converges much more optimally resulting in a signficantly better drawing of the rabbit even with our lowered settings.</figcaption>
+      </td>
+    </tr>
+
+    <br/>
+    <tr>
+      <td>
+        <img src="images/d_silver_05.png" align="middle" width="400px"/>
+        <figcaption align="middle">Silver(Ag): eta values -> (0.059193 0.059881 0.047366). k values -> (4.1283 3.5892 2.8132). </figcaption>
+      </td>
+    </tr>
+
+  </table>
+</div>
+</p>
+
+<h3 align="middle">Task 4: Depth of Field</h3>
+
+<p><strong><u>Implementation:</u></strong> We've been working with a "pinhole" digicam simulation which assumes everything is perfectly in focus. In an actual camera though, there is a field of focus, which
+  we can now simulate. A theoretically optimal thin-lens has no actual thickness. Our lens allows us to focus and blur our image to create different depth of field scenarios.
+<div align="middle">
+  <table style="width=100%">
+    <tr>
+      <td>
+        <img src="images/dragon_focus_13.png" align="middle" width="400px"/>
+        <figcaption align="middle">Focus Stack: focus = 13, aperture = 0.03</figcaption>
+      </td>
+    </tr>
+
+    <br/>
+    <tr>
+      <td>
+        <img src="images/dragon_focus_3.png" align="middle" width="400px"/>
+        <figcaption align="middle">Focus Stack: focus = 3, aperture = 0.03</figcaption>
+      </td>
+    </tr>
+
+    <br/>
+    <tr>
+      <td>
+        <img src="images/dragon_focus_05.png" align="middle" width="400px"/>
+        <figcaption align="middle">Focus Stack: focus = 0.5, aperture = 0.03</figcaption>
+      </td>
+    </tr>
+
+    <br/>
+    <tr>
+      <td>
+        <img src="images/dragon_focus_02.png" align="middle" width="400px"/>
+        <figcaption align="middle">Focus Stack: focus = 0.2. aperture = 0.03</figcaption>
+      </td>
+    </tr>
+
+    <br/>
+    <tr>
+      <td>
+        <img src="images/d_ap_525.png" align="middle" width="400px"/>
+        <figcaption align="middle">aperture = 0.0525, focus = 1.25</figcaption>
+      </td>
+    </tr>
+
+    <br/>
+    <tr>
+      <td>
+        <img src="images/d_ap_25.png" align="middle" width="400px"/>
+        <figcaption align="middle">aperture = 0.25, focus = 1.25</figcaption>
+      </td>
+    </tr>
+
+    <br/>
+    <tr>
+      <td>
+        <img src="images/d_ap_50.png" align="middle" width="400px"/>
+        <figcaption align="middle">aperture = 0.5, focus = 1.25</figcaption>
+      </td>
+    </tr>
+
+    <br/>
+    <tr>
+      <td>
+        <img src="images/d_ap_100.png" align="middle" width="400px"/>
+        <figcaption align="middle">aperture = 1, focus = 1.25</figcaption>
+      </td>
+    </tr>
+
+  </table>
+</div>
+</p>
+
+
+</body>
+</html>
